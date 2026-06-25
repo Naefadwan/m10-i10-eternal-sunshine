@@ -164,15 +164,15 @@ jobs:
             -H 'Content-Type: application/json' \
             -d '{"question": "How do I prep ginger for stir-fry?"}')
           echo "$response"
-          echo "$response" | python3 - <<'PY'
-          import json, sys
-          data = json.load(sys.stdin)
-          SENTINEL = "I cannot answer this from the available sources"
-          assert len(data["citations"]) > 0, f"no citations: {data}"
-          assert data["confidence"] > 0, f"confidence not positive: {data['confidence']}"
-          assert data["answer"] != SENTINEL, "answer is sentinel — retrieval or generation failed"
-          print(f"ok: {len(data['citations'])} citation(s), confidence={data['confidence']}")
-          PY
+          RESP="$response" python3 -c "
+import json, os, sys
+data = json.loads(os.environ['RESP'])
+SENTINEL = 'I cannot answer this from the available sources'
+assert len(data['citations']) > 0, f'no citations: {data}'
+assert data['confidence'] > 0, f\"confidence not positive: {data['confidence']}\"
+assert data['answer'] != SENTINEL, 'answer is sentinel — retrieval or generation failed'
+print(f\"ok: {len(data['citations'])} citation(s), confidence={data['confidence']}\")
+"
       - name: Full-stack idempotency — down -v + re-up + re-seed + re-curl
         run: |
           # Data-layer idempotency (seed re-run) is necessary but not
@@ -190,15 +190,15 @@ jobs:
             -H 'Content-Type: application/json' \
             -d '{"question": "How do I prep ginger for stir-fry?"}')
           echo "$response"
-          echo "$response" | python3 - <<'PY'
-          import json, sys
-          data = json.load(sys.stdin)
-          SENTINEL = "I cannot answer this from the available sources"
-          assert len(data["citations"]) > 0, f"no citations after re-up: {data}"
-          assert data["confidence"] > 0, f"confidence not positive after re-up: {data['confidence']}"
-          assert data["answer"] != SENTINEL, "answer is sentinel after re-up — stack is not idempotent"
-          print(f"full-stack idempotency ok: {len(data['citations'])} citation(s), confidence={data['confidence']}")
-          PY
+          RESP="$response" python3 -c "
+import json, os, sys
+data = json.loads(os.environ['RESP'])
+SENTINEL = 'I cannot answer this from the available sources'
+assert len(data['citations']) > 0, f'no citations after re-up: {data}'
+assert data['confidence'] > 0, f\"confidence not positive after re-up: {data['confidence']}\"
+assert data['answer'] != SENTINEL, 'answer is sentinel after re-up — stack is not idempotent'
+print(f\"full-stack idempotency ok: {len(data['citations'])} citation(s), confidence={data['confidence']}\")
+"
       - name: Playwright smoke (against running stack)
         run: |
           cd web
