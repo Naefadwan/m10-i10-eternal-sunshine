@@ -164,15 +164,16 @@ jobs:
             -H 'Content-Type: application/json' \
             -d '{"question": "How do I prep ginger for stir-fry?"}')
           echo "$response"
-          RESP="$response" python3 -c "
-import json, os, sys
-data = json.loads(os.environ['RESP'])
-SENTINEL = 'I cannot answer this from the available sources'
-assert len(data['citations']) > 0, f'no citations: {data}'
-assert data['confidence'] > 0, f\"confidence not positive: {data['confidence']}\"
-assert data['answer'] != SENTINEL, 'answer is sentinel — retrieval or generation failed'
-print(f\"ok: {len(data['citations'])} citation(s), confidence={data['confidence']}\")
-"
+          cat > /tmp/check_rag.py <<'PY'
+          import json, os
+          data = json.loads(os.environ['RESP'])
+          SENTINEL = 'I cannot answer this from the available sources'
+          assert len(data['citations']) > 0, f'no citations: {data}'
+          assert data['confidence'] > 0, f"confidence not positive: {data['confidence']}"
+          assert data['answer'] != SENTINEL, 'answer is sentinel — retrieval or generation failed'
+          print(f"ok: {len(data['citations'])} citation(s), confidence={data['confidence']}")
+          PY
+          RESP="$response" python3 /tmp/check_rag.py
       - name: Full-stack idempotency — down -v + re-up + re-seed + re-curl
         run: |
           # Data-layer idempotency (seed re-run) is necessary but not
@@ -190,15 +191,16 @@ print(f\"ok: {len(data['citations'])} citation(s), confidence={data['confidence'
             -H 'Content-Type: application/json' \
             -d '{"question": "How do I prep ginger for stir-fry?"}')
           echo "$response"
-          RESP="$response" python3 -c "
-import json, os, sys
-data = json.loads(os.environ['RESP'])
-SENTINEL = 'I cannot answer this from the available sources'
-assert len(data['citations']) > 0, f'no citations after re-up: {data}'
-assert data['confidence'] > 0, f\"confidence not positive after re-up: {data['confidence']}\"
-assert data['answer'] != SENTINEL, 'answer is sentinel after re-up — stack is not idempotent'
-print(f\"full-stack idempotency ok: {len(data['citations'])} citation(s), confidence={data['confidence']}\")
-"
+          cat > /tmp/check_rag.py <<'PY'
+          import json, os
+          data = json.loads(os.environ['RESP'])
+          SENTINEL = 'I cannot answer this from the available sources'
+          assert len(data['citations']) > 0, f'no citations after re-up: {data}'
+          assert data['confidence'] > 0, f"confidence not positive after re-up: {data['confidence']}"
+          assert data['answer'] != SENTINEL, 'answer is sentinel after re-up — stack is not idempotent'
+          print(f"full-stack idempotency ok: {len(data['citations'])} citation(s), confidence={data['confidence']}")
+          PY
+          RESP="$response" python3 /tmp/check_rag.py
       - name: Playwright smoke (against running stack)
         run: |
           cd web
