@@ -22,7 +22,7 @@ jobs:
           python-version: "3.11"
           cache: pip
       - name: Install structural-test deps
-        run: pip install pytest PyYAML
+        run: pip install pytest PyYAML httpx
       - name: Structural autograder
         run: pytest tests/ -v --tb=short
 
