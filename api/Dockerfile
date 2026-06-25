@@ -26,8 +26,6 @@ RUN pip install --no-cache-dir --timeout 300 --retries 5 \
     https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
 
 COPY api/ /app/api/
-COPY api/seed_weaviate.py /app/api/seed_weaviate.py
-COPY api/seed_chunks.json /app/api/seed_chunks.json
 EXPOSE 8000
 
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

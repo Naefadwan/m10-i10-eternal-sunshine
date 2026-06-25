@@ -8,5 +8,5 @@ set -euo pipefail
 WEAVIATE_URL="${WEAVIATE_URL:-http://localhost:8080}"
 
 echo "Seeding Weaviate inside the api container (WEAVIATE_URL: $WEAVIATE_URL)..."
-docker compose exec -T api python seed_weaviate.py
+docker compose exec -T api python api/seed_weaviate.py
 echo "Weaviate seeding completed successfully."
