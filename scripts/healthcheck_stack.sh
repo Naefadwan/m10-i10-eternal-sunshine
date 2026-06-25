@@ -4,29 +4,59 @@
 
 set -euo pipefail
 
-services=("api" "web" "neo4j" "weaviate")
-max_iterations=45
-sleep_seconds=2
+echo "Waiting for stack to become healthy (90 seconds max budget)..."
 
-for i in $(seq 1 $max_iterations); do
-  all_healthy=true
-  for svc in "${services[@]}"; do
-    # Get health status of the service
-    status=$(docker compose ps "$svc" --format json | python3 -c "import sys,json; lines=[l for l in sys.stdin if l.strip()]; print(json.loads(lines[0]).get('Health','')) if lines else print('')" 2>/dev/null || true)
-    if [ "$status" != "healthy" ]; then
-      all_healthy=false
-      break
-    fi
-  done
+# Loop with 2s sleep, up to 45 iterations.
+for i in {1..45}; do
+  # Fetch JSON status of compose services
+  STATUS_JSON=$(docker compose ps --format json)
 
-  if [ "$all_healthy" = "true" ]; then
-    echo "All services are healthy!"
+  # Check health statuses of api, web, neo4j, and weaviate using a quick Python line parser
+  HEALTHY_COUNT=$(python3 -c '
+import sys, json
+raw = sys.argv[1]
+try:
+    data = json.loads(raw)
+except Exception:
+    data = []
+    # Handle line-delimited JSON
+    for line in raw.strip().splitlines():
+        if line.strip():
+            try:
+                data.append(json.loads(line))
+            except Exception:
+                pass
+
+if not isinstance(data, list):
+    data = [data]
+
+required = {"api", "web", "neo4j", "weaviate"}
+healthy = set()
+
+for item in data:
+    # Handle potential differences in service key depending on Compose version (e.g. Service or Name)
+    svc = item.get("Service") or item.get("Name")
+    health = item.get("Health") or item.get("HealthState") or ""
+    
+    # Strip project prefix or container suffixes from Service name if applicable
+    if svc:
+        # If svc is e.g. "m10-i10-eternal-sunshine-api-1", match the service name part
+        for r_svc in required:
+            if r_svc == svc or f"-{r_svc}-" in svc or svc.endswith(f"-{r_svc}"):
+                if "healthy" in health.lower():
+                    healthy.add(r_svc)
+
+print(len(healthy))
+' "$STATUS_JSON")
+
+  if [ "$HEALTHY_COUNT" -eq 4 ]; then
+    echo "All four services (api, web, neo4j, weaviate) are healthy!"
     exit 0
+  else
+    echo "Healthy services: $HEALTHY_COUNT/4. Sleeping 2 seconds..."
   fi
-
-  sleep $sleep_seconds
+  sleep 2
 done
 
-echo "Timeout waiting for services to become healthy."
-docker compose ps
+echo "Error: Timeout waiting for services to become healthy." >&2
 exit 1
