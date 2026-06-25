@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+pydantic
+httpx
+spacy
+neo4j
+weaviate-client
+sentence-transformers
+transformers
+torch
+pytest
+pytest-asyncio
+python-dotenv
