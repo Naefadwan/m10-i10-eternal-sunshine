@@ -39,3 +39,13 @@ def get_embedder(request: Request):
     `vectorizer=none` Weaviate class.
     """
     return request.app.state.embedder
+
+
+def get_settings(request: Request):
+    """Return the process-scoped Settings instance.
+
+    Constructed once in `main.lifespan` and stored on `app.state`.
+    Centralises env-var reads (NEO4J_URI, WEAVIATE_URL, WEB_ORIGIN, …)
+    so paths through the code do not pepper `os.environ[...]` calls.
+    """
+    return request.app.state.settings

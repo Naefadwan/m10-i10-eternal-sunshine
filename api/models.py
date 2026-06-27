@@ -72,3 +72,14 @@ class HealthResponse(BaseModel):
 class ReadyDetail(BaseModel):
     neo4j: str
     weaviate: str
+
+
+class ErrorResponse(BaseModel):
+    """Structured error envelope returned by 422 and 500 handlers.
+
+    Gives the Frontend lead a single shape to parse for all error
+    responses, matching the structure `/kg/query` already uses for
+    `UnsupportedQueryDetail`.
+    """
+    reason: str
+    detail: object = None
