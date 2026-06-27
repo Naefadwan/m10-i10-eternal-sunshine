@@ -1,0 +1,25 @@
+# Repo-root .dockerignore — Docker reads this from the build context root.
+# The api/Dockerfile uses `context: .` so this file controls what gets
+# sent to the Docker daemon for the api image build.
+
+.git
+.github
+.venv
+.pytest_cache
+__pycache__
+*.pyc
+.env
+.env.local
+.env.example
+
+# Test artifacts — not needed in the production image.
+tests/
+
+# Web source — copied separately by web/Dockerfile with its own context.
+web/node_modules
+web/.next
+
+# IDE / editor config
+.vscode
+*.swp
+*.swo

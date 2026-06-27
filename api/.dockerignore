@@ -1,3 +1,10 @@
+# NOTE: This file is NOT used by Docker when the build context is the
+# repo root (build: { context: ., dockerfile: api/Dockerfile }).
+# Docker reads .dockerignore from the build context root — see the
+# repo-root /.dockerignore for the authoritative exclusion list.
+#
+# This file is kept for documentation and for any tooling that
+# inspects the api/ directory directly.
 .git
 .venv
 __pycache__

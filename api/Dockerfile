@@ -28,4 +28,12 @@ RUN pip install --no-cache-dir --timeout 300 --retries 5 \
 COPY api/ /app/api/
 EXPOSE 8000
 
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Structured logging level — INFO by default; set DEBUG for dev.
+ENV LOG_LEVEL=INFO
+
+# Native Docker healthcheck — supplements the compose-level healthcheck
+# so `docker inspect` and `docker compose ps` report health natively.
+HEALTHCHECK --interval=10s --timeout=5s --start-period=120s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')" || exit 1
+
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info"]
